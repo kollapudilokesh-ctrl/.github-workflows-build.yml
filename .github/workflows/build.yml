@@ -37,7 +37,28 @@ jobs:
 
       - name: Add exact alarm permission
         run: |
-          sed -i '/<manifest/a\    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />' android/app/src/main/AndroidManifest.xml
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path("android/app/src/main/AndroidManifest.xml")
+          content = path.read_text()
+
+          permission = '    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />'
+
+          if "android.permission.SCHEDULE_EXACT_ALARM" not in content:
+              content, count = re.subn(
+                  r'(<manifest\b[^>]*>)',
+                  r'\1\n' + permission,
+                  content,
+                  count=1
+              )
+              if count != 1:
+                  raise SystemExit("Could not find manifest opening tag")
+
+          path.write_text(content)
+          print("Exact alarm permission added successfully")
+          PY
 
       - name: Sync Android
         run: npx cap sync android
@@ -53,5 +74,5 @@ jobs:
         with:
           name: PillReminder-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
-          
+          if-no-files-found: error
           
