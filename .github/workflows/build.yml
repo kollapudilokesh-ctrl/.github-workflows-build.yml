@@ -4,17 +4,18 @@ name: Build PillReminder APK
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout project
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -31,10 +32,14 @@ jobs:
       - name: Build web app
         run: npm run build
 
-      - name: Add Android platform
+      - name: Add Android
         run: npx cap add android
 
-      - name: Sync Android project
+      - name: Add exact alarm permission
+        run: |
+          sed -i '/<manifest/a\    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />' android/app/src/main/AndroidManifest.xml
+
+      - name: Sync Android
         run: npx cap sync android
 
       - name: Build APK
@@ -48,4 +53,5 @@ jobs:
         with:
           name: PillReminder-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
+          
           
